@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora IFDB - Índice de Madurez de Datos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Estilos específicos para cuando el usuario guarde como PDF / Imprima */
+        @media print {
+            body { background-color: white; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .print-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; box-shadow: none !important;}
+            .page-break { page-break-before: always; }
+        }
+        
+        /* Custom range slider styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #16a34a;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 3px;
+        }
+        input[type=range]:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8 text-center no-print">
+            <h1 class="text-3xl md:text-4xl font-bold text-green-800 mb-2">COOMULBANANO</h1>
+            <h2 class="text-xl md:text-2xl font-semibold text-slate-800 mb-2">Sistema de Seguimiento y Evaluación de Proyecto</h2>
+            <p class="text-slate-600 text-sm md:text-base max-w-3xl mx-auto mb-2">Programa: Desarrollo de capacidades digitales para la gestión y aprovechamiento de datos en organizaciones bananeras de la Zona Bananera, Magdalena.</p>
+            <p class="text-slate-500 font-medium">Gerencia General: Leonardo Marriaga Liñán</p>
+            <p class="text-slate-600 text-sm md:text-base max-w-3xl mx-auto mb-2">Dirección de Proyecto: Juan Cueto Tilano</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Columna Izquierda: Formulario -->
+            <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 no-print">
+                <h2 class="text-xl font-semibold mb-6 border-b pb-2 flex items-center justify-between">
+                    <span>Parámetros de Evaluación</span>
+                    <span class="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">Valores de 0 a 100</span>
+                </h2>
+
+                <form id="ifdb-form" class="space-y-6">
+                    
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6 space-y-4">
+                        <h3 class="font-semibold text-slate-700 text-sm uppercase tracking-wide">Información Institucional</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Nombre de la Empresa</label>
+                                <input type="text" id="empresa" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="Ej: Finca La Bonita">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Dependencia / Área Evaluada</label>
+                                <input type="text" id="dependencia" list="dependencias-list" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="Ej: Producción, Finanzas...">
+                                <datalist id="dependencias-list">
+                                    <option value="Reporte General">
+                                    <option value="Producción">
+                                    <option value="Contabilidad">
+                                    <option value="Administración">
+                                    <option value="Recursos Humanos">
+                                    <option value="Centro de Formación">
+                                    <option value="Almacen">
+                                    <option value="Gerencia General">
+                                        
+                                </datalist>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Responsable del reporte</label>
+                                <input type="text" id="resp_reporte" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none" placeholder="Nombre del evaluador">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">Periodo evaluado</label>
+                                <select id="periodo_evaluado" class="w-full border rounded p-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                                    <option value="Parcial">Parcial</option>
+                                    <option value="Final">Final</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dimensión 1 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="font-medium text-slate-800 flex items-center gap-2">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">25%</span>
+                                1. Uso de herramientas digitales
+                            </label>
+                            <input type="number" id="val_d1" class="w-16 border rounded p-1 text-center font-semibold bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" value="0" min="0" max="100" oninput="updateSlider('d1')">
+                        </div>
+                        <input type="range" id="slide_d1" min="0" max="100" value="0" class="w-full" oninput="updateInput('d1')">
+                        <p class="text-xs text-slate-500 leading-tight">
+                            <strong>Rúbrica:</strong> <span class="text-red-500"><40: Nulo</span> | <span class="text-orange-500">40-69: Excel básico</span> | <span class="text-yellow-600">70-89: Excel + PBI Básico</span> | <span class="text-green-600">90-100: PBI, Power Query, IA.</span>
+                        </p>
+                    </div>
+
+                    <!-- Dimensión 2 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="font-medium text-slate-800 flex items-center gap-2">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">20%</span>
+                                2. Capacidad de análisis de datos
+                            </label>
+                            <input type="number" id="val_d2" class="w-16 border rounded p-1 text-center font-semibold bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" value="0" min="0" max="100" oninput="updateSlider('d2')">
+                        </div>
+                        <input type="range" id="slide_d2" min="0" max="100" value="0" class="w-full" oninput="updateInput('d2')">
+                        <p class="text-xs text-slate-500 leading-tight">
+                            Capacidad real para limpiar datos, cruzar información y sacar conclusiones de negocio (Ej: análisis de producción y rechazos).
+                        </p>
+                    </div>
+
+                    <!-- Dimensión 3 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="font-medium text-slate-800 flex items-center gap-2">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">15%</span>
+                                3. Uso de reportes y visualización
+                            </label>
+                            <input type="number" id="val_d3" class="w-16 border rounded p-1 text-center font-semibold bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" value="0" min="0" max="100" oninput="updateSlider('d3')">
+                        </div>
+                        <input type="range" id="slide_d3" min="0" max="100" value="0" class="w-full" oninput="updateInput('d3')">
+                        <p class="text-xs text-slate-500 leading-tight">
+                            Calidad, cantidad y frecuencia de dashboards/reportes automáticos útiles generados mensualmente.
+                        </p>
+                    </div>
+
+                    <!-- Dimensión 4 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="font-medium text-slate-800 flex items-center gap-2">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">20%</span>
+                                4. Aplicación en procesos organizacionales
+                            </label>
+                            <input type="number" id="val_d4" class="w-16 border rounded p-1 text-center font-semibold bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" value="0" min="0" max="100" oninput="updateSlider('d4')">
+                        </div>
+                        <input type="range" id="slide_d4" min="0" max="100" value="0" class="w-full" oninput="updateInput('d4')">
+                        <p class="text-xs text-slate-500 leading-tight">
+                            Uso real en operaciones (compras, producción bananera, finanzas). ¿Se revisan dashboards antes de tomar decisiones?
+                        </p>
+                    </div>
+
+                    <!-- Dimensión 5 -->
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="font-medium text-slate-800 flex items-center gap-2">
+                                <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold">20%</span>
+                                5. Apropiación institucional
+                            </label>
+                            <input type="number" id="val_d5" class="w-16 border rounded p-1 text-center font-semibold bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" value="0" min="0" max="100" oninput="updateSlider('d5')">
+                        </div>
+                        <input type="range" id="slide_d5" min="0" max="100" value="0" class="w-full" oninput="updateInput('d5')">
+                        <p class="text-xs text-slate-500 leading-tight">
+                            Cultura data-driven. Apoyo de gerencia, políticas formales y presupuesto para licencias/capacitación.
+                        </p>
+                    </div>
+
+                    <!-- Mensaje de error oculto -->
+                    <div id="error-msg" class="hidden bg-red-100 text-red-700 p-3 rounded-md text-sm mt-2">
+                        Por favor, asegúrate de que todos los valores estén entre 0 y 100.
+                    </div>
+
+                    <button type="button" onclick="calcularIFDB()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors mt-6 shadow-sm">
+                        Calcular Resultados
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <button type="button" onclick="exportarCSV()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold py-2 px-4 rounded transition-colors shadow-sm flex justify-center items-center gap-2" title="Descarga la evaluación actual">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Exportar a CSV
+                        </button>
+                        <label class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded transition-colors shadow-sm cursor-pointer flex justify-center items-center gap-2 text-center" title="Selecciona varios archivos CSV para promediarlos">
+                            <input type="file" multiple accept=".csv" class="hidden" onchange="importarCSV(event)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"></path></svg>
+                            Integrar Reportes
+                        </label>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1 text-center">Para generar el Reporte General de la empresa, selecciona "Integrar Reportes" y sube los CSV de las distintas áreas.</p>
+                </form>
+            </section>
+
+            <!-- Columna Derecha: Reporte de Resultados -->
+            <section id="report-section" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 print-container relative flex flex-col items-center justify-center min-h-[500px]">
+                
+                <!-- Estado Vacío (antes de calcular) -->
+                <div id="empty-state" class="text-center text-slate-400 no-print">
+                    <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    <p class="text-lg">Ingresa los valores y presiona "Calcular"<br>para ver el reporte.</p>
+                </div>
+
+                <!-- Contenido del Reporte (oculto por defecto) -->
+                <div id="results-content" class="hidden w-full h-full flex-col">
+                    
+                    <div class="flex justify-between items-start mb-6 border-b pb-4">
+                        <div class="w-full pr-4">
+                            <h2 class="text-2xl font-bold text-slate-800">Reporte IFDB - COOMULBANANO</h2>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 text-sm text-slate-600">
+                                <p><span class="font-semibold">Empresa:</span> <span id="out_empresa" class="italic">-</span></p>
+                                <p><span class="font-semibold">Área:</span> <span id="out_dependencia" class="italic">-</span></p>
+                                <p><span class="font-semibold">Responsable:</span> <span id="out_responsable" class="italic">-</span></p>
+                                <p><span class="font-semibold">Periodo:</span> <span id="out_periodo" class="italic">-</span></p>
+                                <p><span class="font-semibold">Fecha:</span> <span id="out_fecha"></span></p>
+                                <p><span class="font-semibold">Versión:</span> 1.0</p>
+                            </div>
+                        </div>
+                        <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-slate-900 text-white text-sm py-2 px-4 rounded transition-colors flex items-center gap-2 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            Imprimir / PDF
+                        </button>
+                    </div>
+
+                    <!-- Puntaje Final -->
+                    <div class="flex flex-col items-center justify-center mb-6 bg-slate-50 rounded-xl p-6 border border-slate-100">
+                        <p class="text-sm text-slate-500 uppercase tracking-wider font-semibold mb-1">Índice Global IFDB</p>
+                        <div class="flex items-baseline gap-2">
+                            <span id="score-value" class="text-6xl font-extrabold text-slate-800">0</span>
+                            <span class="text-xl text-slate-500">/ 100</span>
+                        </div>
+                        <span id="score-badge" class="mt-3 px-4 py-1 rounded-full text-sm font-bold"></span>
+                    </div>
+
+                    <!-- Gráfico -->
+                    <div class="relative h-64 w-full mb-6 flex justify-center">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+
+                    <!-- Resumen de datos para imprimir -->
+                    <div class="hidden print-only mb-6 w-full">
+                        <h3 class="text-lg font-semibold mb-3 border-b pb-1">Desglose de Puntuación</h3>
+                        <table class="w-full text-sm text-left">
+                            <tr class="border-b"><td class="py-1">Uso de Herramientas (25%)</td><td id="td_d1" class="font-bold text-right">0</td></tr>
+                            <tr class="border-b"><td class="py-1">Capacidad de Análisis (20%)</td><td id="td_d2" class="font-bold text-right">0</td></tr>
+                            <tr class="border-b"><td class="py-1">Uso de Reportes (15%)</td><td id="td_d3" class="font-bold text-right">0</td></tr>
+                            <tr class="border-b"><td class="py-1">Aplicación en Procesos (20%)</td><td id="td_d4" class="font-bold text-right">0</td></tr>
+                            <tr><td class="py-1">Apropiación Institucional (20%)</td><td id="td_d5" class="font-bold text-right">0</td></tr>
+                        </table>
+                    </div>
+
+                    <!-- Recomendaciones -->
+                    <div class="mt-auto pt-4">
+                        <h3 class="text-lg font-semibold mb-3 text-slate-800 border-b pb-1">Análisis y Recomendaciones</h3>
+                        <ul id="recommendations-list" class="space-y-2 text-sm text-slate-600 list-disc pl-5">
+                            <!-- Inyectado por JS -->
+                        </ul>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-slate-200 text-xs text-slate-600">
+                        <div class="mb-4">
+                            <p class="font-semibold text-slate-800 mb-2">Créditos técnicos de Desarrollo:</p>
+                            <ul class="space-y-1">
+                                <li>• Administración durante la implementación: <strong>Gerencia de Leonardo Marriaga Liñan</strong></li>
+                                <li>• Proyecto propuesto y formulado por: <strong>Juan Luis Cueto Tilano</strong></li>
+                                <li>• Diseño y desarrollo de la plataforma de seguimiento y evaluación: <strong>Juan Luis Cueto Tilano</strong></li>
+                                <li>• Herramienta desarrollada para <strong>COOMULBANANO</strong></li>
+                            </ul>
+                        </div>
+                        <div class="text-center mt-6 pt-4 border-t border-slate-100 text-slate-400 font-medium">
+                            Sistema de seguimiento y evaluación institucional desarrollado por Juan Luis Cueto Tilano para COOMULBANANO.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Sincronización entre input de número y slider
+        function updateInput(id) {
+            document.getElementById(`val_${id}`).value = document.getElementById(`slide_${id}`).value;
+        }
+
+        function updateSlider(id) {
+            let val = document.getElementById(`val_${id}`).value;
+            if(val > 100) { val = 100; document.getElementById(`val_${id}`).value = 100; }
+            if(val < 0) { val = 0; document.getElementById(`val_${id}`).value = 0; }
+            document.getElementById(`slide_${id}`).value = val;
+        }
+
+        let myChart = null;
+
+        // Función principal de cálculo
+        function calcularIFDB() {
+            // 1. Obtener valores
+            const d1 = parseInt(document.getElementById('val_d1').value) || 0;
+            const d2 = parseInt(document.getElementById('val_d2').value) || 0;
+            const d3 = parseInt(document.getElementById('val_d3').value) || 0;
+            const d4 = parseInt(document.getElementById('val_d4').value) || 0;
+            const d5 = parseInt(document.getElementById('val_d5').value) || 0;
+            const errorMsg = document.getElementById('error-msg');
+
+            // Validación básica
+            if ([d1,d2,d3,d4,d5].some(v => v < 0 || v > 100)) {
+                errorMsg.classList.remove('hidden');
+                return;
+            } else {
+                errorMsg.classList.add('hidden');
+            }
+
+            // 2. Calcular Fórmula IFDB
+            // IFDB = (UsoHerramientas×0.25) + (CapacidadAnálisis×0.20) + (Reportes×0.15) + (AplicaciónProcesos×0.20) + (Apropiación×0.20)
+            const ifdb = (d1 * 0.25) + (d2 * 0.20) + (d3 * 0.15) + (d4 * 0.20) + (d5 * 0.20);
+            
+            // 3. Actualizar UI
+            mostrarResultados(ifdb.toFixed(1), [d1, d2, d3, d4, d5]);
+            generarRecomendaciones(d1, d2, d3, d4, d5);
+        }
+
+        function mostrarResultados(score, dataValues) {
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('results-content').classList.remove('hidden');
+            document.getElementById('results-content').classList.add('flex');
+            
+            // Información institucional
+            const empresa = document.getElementById('empresa').value || 'No especificada';
+            const dependencia = document.getElementById('dependencia').value || 'No especificada';
+            const responsable = document.getElementById('resp_reporte').value || 'No especificado';
+            const periodo = document.getElementById('periodo_evaluado').value;
+
+            const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute:'2-digit' };
+            document.getElementById('out_fecha').textContent = new Date().toLocaleDateString('es-ES', opcionesFecha);
+            
+            document.getElementById('out_empresa').textContent = empresa;
+            document.getElementById('out_dependencia').textContent = dependencia;
+            document.getElementById('out_responsable').textContent = responsable;
+            document.getElementById('out_periodo').textContent = periodo;
+
+            // Actualizar tabla para impresión
+            document.getElementById('td_d1').textContent = dataValues[0];
+            document.getElementById('td_d2').textContent = dataValues[1];
+            document.getElementById('td_d3').textContent = dataValues[2];
+            document.getElementById('td_d4').textContent = dataValues[3];
+            document.getElementById('td_d5').textContent = dataValues[4];
+
+            // Animación y color del puntaje
+            document.getElementById('score-value').textContent = score;
+            const badge = document.getElementById('score-badge');
+            
+            if (score >= 90) {
+                badge.textContent = "Sobresaliente";
+                badge.className = "mt-3 px-4 py-1 rounded-full text-sm font-bold bg-green-100 text-green-700";
+            } else if (score >= 70) {
+                badge.textContent = "Madurez Avanzada";
+                badge.className = "mt-3 px-4 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700";
+            } else if (score >= 40) {
+                badge.textContent = "En Desarrollo";
+                badge.className = "mt-3 px-4 py-1 rounded-full text-sm font-bold bg-yellow-100 text-yellow-700";
+            } else {
+                badge.textContent = "Nivel Inicial";
+                badge.className = "mt-3 px-4 py-1 rounded-full text-sm font-bold bg-red-100 text-red-700";
+            }
+
+            // Actualizar Gráfico Chart.js
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: [
+                        'Herramientas', 
+                        'Capacidad Análisis', 
+                        'Reportes y Visual.', 
+                        'Procesos Org.', 
+                        'Apropiación Inst.'
+                    ],
+                    datasets: [{
+                        label: 'Puntuación Actual',
+                        data: dataValues,
+                        backgroundColor: 'rgba(22, 163, 74, 0.2)', // Green tailwind 600
+                        borderColor: 'rgba(22, 163, 74, 1)',
+                        pointBackgroundColor: 'rgba(22, 163, 74, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(22, 163, 74, 1)',
+                        borderWidth: 2
+                    }, {
+                        label: 'Ideal (100)',
+                        data: [100, 100, 100, 100, 100],
+                        backgroundColor: 'rgba(148, 163, 184, 0.05)',
+                        borderColor: 'rgba(148, 163, 184, 0.3)',
+                        borderWidth: 1,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.05)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            pointLabels: {
+                                font: { family: 'Inter', size: 11, weight: '600' },
+                                color: '#475569'
+                            },
+                            ticks: {
+                                min: 0,
+                                max: 100,
+                                stepSize: 20,
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function generarRecomendaciones(d1, d2, d3, d4, d5) {
+            const list = document.getElementById('recommendations-list');
+            list.innerHTML = ''; // Limpiar anteriores
+
+            let recomendaciones = [];
+
+            if (d1 < 70) recomendaciones.push("<strong>Herramientas:</strong> Implementar un plan de capacitación intensiva en Excel Avanzado y Power BI Básico para el personal clave.");
+            if (d1 >= 90) recomendaciones.push("<strong>Herramientas:</strong> ¡Excelente dominio de herramientas! Fomentar la adopción de IA Generativa (Copilot/ChatGPT) para automatizar macros y análisis.");
+
+            if (d2 < 70) recomendaciones.push("<strong>Análisis:</strong> El personal requiere reforzar habilidades de estructuración de datos. Fomentar casos prácticos de negocio (ej: cruzar producción con rechazos).");
+            
+            if (d3 < 70) recomendaciones.push("<strong>Reportes:</strong> Automatizar la generación de reportes recurrentes. Migrar informes en PDF estáticos a Dashboards interactivos en Power BI.");
+            
+            if (d4 < 70) recomendaciones.push("<strong>Procesos:</strong> Conectar los datos con la operación. Obligar gradualmente a que las reuniones de área se soporten mostrando tableros de control en vivo.");
+            
+            if (d5 < 70) recomendaciones.push("<strong>Apropiación:</strong> La Gerencia debe solicitar activamente decisiones basadas en datos. Considere asignar presupuesto formal a licenciamiento y roles analíticos dedicados.");
+
+            if (recomendaciones.length === 0) {
+                recomendaciones.push("<span class='text-green-600 font-medium'>¡Felicitaciones! La organización presenta un alto nivel de madurez en todas las dimensiones evaluadas. Mantener la cultura actual.</span>");
+            }
+
+            recomendaciones.forEach(rec => {
+                const li = document.createElement('li');
+                li.innerHTML = rec;
+                list.appendChild(li);
+            });
+        }
+
+        // --- Funciones para Exportar e Importar CSV ---
+
+        function exportarCSV() {
+            // Asegurarse de que esté calculado
+            calcularIFDB();
+            
+            // Función auxiliar para limpiar texto de comas y comillas para el CSV
+            const clean = (str) => (str || '').replace(/,/g, ' ').replace(/"/g, '').trim();
+
+            const empresa = clean(document.getElementById('empresa').value) || 'Sin Empresa';
+            const dep = clean(document.getElementById('dependencia').value) || 'Sin Dependencia';
+            const resp = clean(document.getElementById('resp_reporte').value) || 'Sin Responsable';
+            const per = clean(document.getElementById('periodo_evaluado').value);
+            
+            const d1 = document.getElementById('val_d1').value;
+            const d2 = document.getElementById('val_d2').value;
+            const d3 = document.getElementById('val_d3').value;
+            const d4 = document.getElementById('val_d4').value;
+            const d5 = document.getElementById('val_d5').value;
+            const ifdb = document.getElementById('score-value').textContent; // Tomar el IFDB calculado
+
+            const headers = ["Fecha", "Empresa", "Dependencia", "Responsable", "Periodo", "D1_Herramientas", "D2_Analisis", "D3_Reportes", "D4_Procesos", "D5_Apropiacion", "IFDB_Total"];
+            const row = [
+                new Date().toLocaleDateString('es-ES'),
+                empresa, dep, resp, per, d1, d2, d3, d4, d5, ifdb
+            ];
+
+            const csvContent = headers.join(",") + "\n" + row.join(",");
+            
+            // Usamos Blob con BOM para que Excel abra bien los acentos en UTF-8
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            
+            // Nombre del archivo dinámico
+            const fileName = `IFDB_${empresa.replace(/\s+/g, '_')}_${dep.replace(/\s+/g, '_')}.csv`;
+            link.download = fileName;
+            link.click();
+        }
+
+        async function importarCSV(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            let totalD1 = 0, totalD2 = 0, totalD3 = 0, totalD4 = 0, totalD5 = 0;
+            let count = 0;
+            let empresaGeneral = "";
+
+            for (let file of files) {
+                const text = await file.text();
+                // Separar por líneas y quitar vacías
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+                
+                // Empezamos en 1 para saltar el encabezado
+                for (let i = 1; i < lines.length; i++) {
+                    const cols = lines[i].split(',');
+                    if(cols && cols.length >= 10) { // Validamos que tenga las columnas
+                        if (!empresaGeneral) empresaGeneral = cols[1]; // Guardamos el nombre de la primera empresa que encuentre
+                        totalD1 += parseFloat(cols[5]) || 0;
+                        totalD2 += parseFloat(cols[6]) || 0;
+                        totalD3 += parseFloat(cols[7]) || 0;
+                        totalD4 += parseFloat(cols[8]) || 0;
+                        totalD5 += parseFloat(cols[9]) || 0;
+                        count++;
+                    }
+                }
+            }
+
+            if (count > 0) {
+                // Sacar promedios
+                document.getElementById('val_d1').value = Math.round(totalD1 / count);
+                document.getElementById('val_d2').value = Math.round(totalD2 / count);
+                document.getElementById('val_d3').value = Math.round(totalD3 / count);
+                document.getElementById('val_d4').value = Math.round(totalD4 / count);
+                document.getElementById('val_d5').value = Math.round(totalD5 / count);
+                
+                // Actualizar las barras (sliders) visualmente
+                ['d1','d2','d3','d4','d5'].forEach(id => {
+                    document.getElementById(`slide_${id}`).value = document.getElementById(`val_${id}`).value;
+                });
+
+                // Auto-llenar campos para el reporte general
+                document.getElementById('empresa').value = empresaGeneral || "Múltiples Empresas";
+                document.getElementById('dependencia').value = "Reporte General (Integrado)";
+                
+                // Disparar el cálculo y la actualización visual
+                calcularIFDB();
+                
+                alert(`Éxito: Se integraron ${count} evaluaciones en un Reporte General.`);
+            } else {
+                alert("No se encontraron datos válidos en los archivos seleccionados. Asegúrate de que son los archivos CSV generados por este sistema.");
+            }
+            
+            // Reiniciar el input de archivos por si quiere subir los mismos después
+            event.target.value = ''; 
+        }
+    </script>
+</body>
+</html>
